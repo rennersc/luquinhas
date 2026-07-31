@@ -196,8 +196,45 @@ Ordem que faz sentido antes de qualquer extensão:
    número de SMs em vez da tabela completa) derrubam isso para ~9 candidatos por
    perna, o que é o caminho para um protótipo em hardware.
 
-## 6. Como inspecionar o `.slx` sem MATLAB
+## 6. Como inspecionar e editar o `.slx` sem MATLAB
 
 `tools/unpack_slx.sh` descompacta o modelo (é um zip OPC). O código do bloco MPC
 fica em `simulink/stateflow/chart_126.xml`, dentro de um `<P Name="script">`;
 `matlab/MPC.m` é esse script já extraído e des-escapado.
+
+`tools/slx_edit.py` faz a edição sem MATLAB, sempre gerando um arquivo novo:
+
+```bash
+tools/slx_edit.py get-mpc   model/orig.slx > matlab/MPC.m      # extrai o código
+tools/slx_edit.py set-mpc   model/orig.slx model/v13.slx matlab/MPC.m
+tools/slx_edit.py set-init  model/orig.slx model/v13.slx init.txt
+tools/slx_edit.py set-const model/orig.slx model/v13.slx 1603 3000
+```
+
+Validação feita: repacotar o modelo sem alterações produz um zip com a mesma
+lista, ordem e conteúdo de membros do original, e o ciclo
+`get-mpc` → `set-mpc` é idempotente byte a byte em todos os 55 membros.
+
+### O que é seguro editar assim, e o que não é
+
+Seguro — texto dentro de `<P>`, sem efeito em checksum:
+
+- código do bloco MATLAB Function (`chart_126.xml`);
+- `InitFcn` e valores de blocos `Constant`, `Gain`, `Fcn`;
+- parâmetros de bloco já existentes (`SampleTime` do powergui, `StopTime`,
+  ganhos, valores de R/L/C que são expressões de workspace).
+
+Requer cuidado ou MATLAB:
+
+- **adicionar/remover blocos ou linhas** — exige criar SIDs coerentes, portas,
+  `Line`/`Branch` e atualizar `graphicalInterface.json`. Dá pra fazer, mas o
+  custo/risco sobe muito; melhor na GUI;
+- `blockdiagram.xml` tem `PhysicalModelingChecksum` e
+  `PhysicalModelingParameterChecksum` (rede Simscape/SPS). Mexer na topologia
+  elétrica invalida esses valores. Alterar só o código do MPC não toca neles;
+- `Signal Editor` guarda dados em `simulink/bdmxdata/UserData_*.mxarray`
+  (formato MAT binário) — não editar à mão.
+
+**Limite fundamental:** daqui não há como *rodar* a simulação. Toda edição feita
+por esta via precisa de uma abertura no MATLAB para confirmar que o modelo carrega
+e compila. Por isso o original em `model/` nunca é sobrescrito.
