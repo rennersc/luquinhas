@@ -196,7 +196,63 @@ Ordem que faz sentido antes de qualquer extensão:
    número de SMs em vez da tabela completa) derrubam isso para ~9 candidatos por
    perna, o que é o caminho para um protótipo em hardware.
 
-## 6. Como inspecionar e editar o `.slx` sem MATLAB
+## 6. Migração R2025a → R2026a ou posterior
+
+A partir do **R2026a** a MathWorks está removendo as bibliotecas baseadas em
+Specialized Power Systems do Simscape Electrical. Este modelo é 100% SPS
+(`sps_lib`, produto `Power_System_Blocks`) — 137 instâncias, 9 tipos de bloco
+mais o `powergui` — então precisa ser convertido.
+
+Existe ferramenta oficial. Não é migração manual.
+
+```matlab
+% caminho automático — gera modelo convertido + relatório HTML
+spsConversionAssistant('MMC_9lvl_matriz_tri_v12_Renner')
+spsConversionAssistant(modelo, pastaDeSaida)
+
+% caminho manual — só localiza os blocos legados
+spsConversionFindBlocks(modelo)
+```
+
+O relatório HTML classifica cada bloco em **totalmente suportado, parcialmente
+suportado e não suportado**; os não suportados ficam por sua conta depois.
+
+### Pré-requisito, já satisfeito
+
+A documentação pede que o `powergui` esteja com *Simulation type* = `Discrete`
+antes de converter. O modelo já está assim (`SimulationMode: Discrete`,
+`SampleTime: 50 µs`) — nada a fazer.
+
+### Ressalvas da própria MathWorks
+
+- **Solver**: usar `ode23t` ou `daessc` no modelo convertido. Ou seja, sai o
+  solver discreto do SPS a 50 µs e entra um solver DAE de passo variável para a
+  planta. O bloco MPC continua discreto a 50 µs, isso não muda.
+- **Inicialização**: "the initialization values at time 0 might be different than
+  in your original model". Nosso modelo depende de capacitores pré-carregados em
+  `Vcap0 = Vsm = 125 V` (`Setx0 = on` em cada Series RLC Branch) — conferir se
+  sobreviveu à conversão, porque é premissa do TCC.
+- **Jitter de chaveamento**: "timing jitter might occur in switching events,
+  especially in models that use pulse-width modulation (PWM) signals". Relevante
+  aqui: o FCS-MPC comuta em todo passo de 50 µs sem modulador. Vale comparar a
+  tensão sintetizada antes/depois.
+
+### O que a conversão não toca
+
+O bloco MATLAB Function do MPC é MATLAB puro — atravessa a conversão sem
+alteração nenhuma. Todo o trabalho de controle (seção 4) é independente disso.
+
+### Ordem recomendada
+
+Gerar o baseline no R2025a **antes** de converter. As três ressalvas acima são
+exatamente do tipo que muda números; sem um ponto de comparação não dá para
+separar efeito da conversão de efeito de mudança no controle.
+
+Referências:
+[spsConversionAssistant](https://www.mathworks.com/help/sps/ref/spsconversionassistant.html) ·
+[Upgrade SPS Models](https://www.mathworks.com/help/sps/ug/upgrade-sps-models-to-use-simscape-blocks.html)
+
+## 7. Como inspecionar e editar o `.slx` sem MATLAB
 
 `tools/unpack_slx.sh` descompacta o modelo (é um zip OPC). O código do bloco MPC
 fica em `simulink/stateflow/chart_126.xml`, dentro de um `<P Name="script">`;
