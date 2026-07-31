@@ -3,3 +3,4 @@ build/
 slprj/
 *.slxc
 *.autosave
+results/

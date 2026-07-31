@@ -6,12 +6,13 @@ modelo Simulink que gerou os resultados do texto.
 ```
 docs/NOTAS_TECNICAS.md   leitura obrigatória: parâmetros, algoritmo e as
                          divergências entre o .slx e o texto do TCC
+docs/MIGRACAO_PASSO_A_PASSO.md   roteiro R2025a -> R2026a/b
 docs/tcc_lucas_de_mingo.pdf
 model/MMC_9lvl_matriz_tri_v12_Renner.slx    modelo original (R2025a)
 matlab/MPC.m             código do bloco MATLAB Function, extraído do .slx
 matlab/params_init.m     parâmetros do InitFcn, para rodar fora do modelo
 matlab/check_migration.m diagnóstico de disponibilidade das bibliotecas
-                         (rodar na release nova antes de migrar)
+matlab/run_baseline.m    roda e salva os sinais em results/, para comparação
 tools/unpack_slx.sh      descompacta o .slx para inspeção em texto
 tools/slx_edit.py        lê/edita o .slx (código do MPC, InitFcn, constantes)
                          sem precisar de MATLAB
