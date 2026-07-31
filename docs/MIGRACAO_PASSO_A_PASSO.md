@@ -69,6 +69,36 @@ no mínimo tensão sintetizada (Fig. 12), correntes de saída vs. referência
 
 ## Fase 2 — Conversão
 
+> ### ⚠ Pré-requisito que invalidou a primeira tentativa
+>
+> `spsConversionAssistant` foi **introduzido no R2025b** e precisa que as
+> bibliotecas SPS estejam **presentes na instalação** para ler os blocos e
+> substituí-los. No R2026a a SPS foi removida — rodar a conversão lá produz um
+> relatório plausível e **uma cópia renomeada do modelo, sem conversão nenhuma**.
+>
+> Foi exatamente o que aconteceu na primeira tentativa: o
+> `MMC_9lvl_matriz_tri_v13_Renner_simscape` gerado no R2026a mantinha os 135
+> blocos apontando para `spsIGBTDiodeLib`, `spsSeriesRLCBranchLib` e
+> `sps_lib/powergui`, todos `unresolved`, e zero blocos Simscape. A licença
+> `Power_System_Blocks` retornava 1 (direito de uso), mas os arquivos da
+> biblioteca não existem mais na release.
+>
+> **Rode a conversão no R2025b**, que é a única release com a biblioteca SPS *e*
+> a ferramenta ao mesmo tempo. O R2025a não serve: não tem a ferramenta.
+>
+> Antes de instalar outra release, vale checar no Add-On Explorer do R2026a se a
+> Specialized Power Systems aparece como add-on instalável.
+>
+> **Validação obrigatória depois de converter** — o relatório não prova nada:
+>
+> ```matlab
+> inspect_converted('<modelo_convertido>')
+> ```
+>
+> A seção 5 tem que vir vazia e o `SourceBlock` dos IGBTs tem que apontar para
+> uma biblioteca Simscape, não para `spsIGBTDiodeLib`. O relatório de conversão
+> descreve o que a ferramenta *saberia* converter, não o que ela *converteu*.
+
 **Passo 2.1.** Confirme o pré-requisito. A documentação exige *Simulation type* =
 `Discrete` no powergui. **Este modelo já está assim** (`Discrete`, 50 µs) — só
 confirme:
@@ -93,9 +123,10 @@ spsConversionAssistant(mdl, fullfile(pwd,'model','convertido'))
 
 Gera o modelo convertido **e** um relatório HTML na pasta de saída.
 
-**Passo 2.4.** Leia o relatório. **Já foi executado** — resultado em
-`docs/Conversion_Assistant_Report.html`, modelo gerado
-`MMC_9lvl_matriz_tri_v13_Renner_simscape`:
+**Passo 2.4.** Leia o relatório. A primeira execução (no R2026a, portanto
+inválida — ver aviso acima) está em `docs/Conversion_Assistant_Report.html`.
+Os números abaixo indicam o que a ferramenta *saberia* converter; espera-se que
+se repitam quando ela rodar no R2025b, aí sim com substituição real:
 
 | Status | Qtd |
 |---|---|
@@ -120,15 +151,15 @@ Detalhe por tipo:
 Os 135 fecham com o inventário: 137 blocos de biblioteca menos o `powergui`
 (tratado à parte, vira Solver Configuration) e o `Signal Editor` (Simulink, não SPS).
 
-**Passo 2.5.** Nada a converter à mão — zero blocos não suportados. O medidor de
-potência `Power`, que era a minha maior dúvida, converteu integralmente.
+**Passo 2.5.** Segundo o relatório, nada a converter à mão — zero blocos não
+suportados, incluindo o medidor de potência `Power`. A confirmar na conversão real.
 
 ### O que importa nesse resultado
 
-**Os 24 capacitores dos submódulos são "totalmente suportados".** Ou seja, o
-`Vcap0 = Vsm = 125 V` (`Setx0 = on`) atravessou a conversão. Era a preocupação
-principal, porque é premissa explícita do TCC. Resolvida — mas confira mesmo
-assim no Passo 3.2.
+**Os 24 capacitores dos submódulos são "totalmente suportados".** Se isso se
+confirmar na conversão real, o `Vcap0 = Vsm = 125 V` (`Setx0 = on`) atravessa —
+era a preocupação principal, porque é premissa explícita do TCC. Confirme no
+Passo 3.2.
 
 ---
 

@@ -6,7 +6,8 @@ modelo Simulink que gerou os resultados do texto.
 ```
 docs/NOTAS_TECNICAS.md   leitura obrigatória: parâmetros, algoritmo e as
                          divergências entre o .slx e o texto do TCC
-docs/MIGRACAO_PASSO_A_PASSO.md   roteiro R2025a -> R2026a/b (conversão já feita)
+docs/MIGRACAO_PASSO_A_PASSO.md   roteiro R2025a -> R2026a/b (conversão pendente:
+                         precisa rodar no R2025b, ver aviso na Fase 2)
 docs/Conversion_Assistant_Report.html   relatório oficial da conversão
 docs/tcc_lucas_de_mingo.pdf
 model/MMC_9lvl_matriz_tri_v12_Renner.slx    modelo original (R2025a)
