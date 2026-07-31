@@ -93,25 +93,42 @@ spsConversionAssistant(mdl, fullfile(pwd,'model','convertido'))
 
 Gera o modelo convertido **e** um relatório HTML na pasta de saída.
 
-**Passo 2.4.** Leia o relatório inteiro. Ele classifica cada bloco em
-**totalmente suportado**, **parcialmente suportado** e **não suportado**.
-Anote a lista dos dois últimos grupos — é o seu trabalho manual.
+**Passo 2.4.** Leia o relatório. **Já foi executado** — resultado em
+`docs/Conversion_Assistant_Report.html`, modelo gerado
+`MMC_9lvl_matriz_tri_v13_Renner_simscape`:
 
-Palpite do que deve cair em "não suportado" ou "parcial", pelo inventário
-(a confirmar no relatório):
+| Status | Qtd |
+|---|---|
+| Não suportado | **0** |
+| Parcialmente suportado | 9 |
+| Totalmente suportado | 126 |
 
-| Bloco | Qtd | Comentário |
+Detalhe por tipo:
+
+| Bloco | Qtd | Status |
 |---|---|---|
-| `powergui` | 1 | vira Solver Configuration |
-| `Power` (P/Q) | 1 | medidor de potência, sem equivalente óbvio 1:1 |
-| Series RLC Branch | 33 | primitivos, devem converter direto |
-| IGBT/Diode | 48 | conversão provável, conferir parâmetros Ron/Rs/Cs |
-| Voltage/Current Measurement | 44 | conferir se entram conversores PS-Simulink |
-| AC/DC Voltage Source, Ground | 9 | primitivos |
+| IGBT/Diode | 48 | totalmente suportado |
+| Voltage Measurement | 34 | totalmente suportado |
+| Series RLC Branch (capacitores dos SMs) | 24 | totalmente suportado |
+| Current Measurement | 10 | totalmente suportado |
+| Ground | 4 | totalmente suportado |
+| AC Voltage Source | 3 | totalmente suportado |
+| DC Voltage Source | 2 | totalmente suportado |
+| Power (P/Q) | 1 | totalmente suportado |
+| **Series RLC Branch (indutores)** | **9** | **parcialmente suportado** |
 
-**Passo 2.5.** Converta na mão o que sobrou. Para o medidor de potência, se não
-houver equivalente, calcule P e Q em Simulink a partir de V e I — o modelo já
-tem ambos medidos e roteados.
+Os 135 fecham com o inventário: 137 blocos de biblioteca menos o `powergui`
+(tratado à parte, vira Solver Configuration) e o `Signal Editor` (Simulink, não SPS).
+
+**Passo 2.5.** Nada a converter à mão — zero blocos não suportados. O medidor de
+potência `Power`, que era a minha maior dúvida, converteu integralmente.
+
+### O que importa nesse resultado
+
+**Os 24 capacitores dos submódulos são "totalmente suportados".** Ou seja, o
+`Vcap0 = Vsm = 125 V` (`Setx0 = on`) atravessou a conversão. Era a preocupação
+principal, porque é premissa explícita do TCC. Resolvida — mas confira mesmo
+assim no Passo 3.2.
 
 ---
 
@@ -129,11 +146,41 @@ bloco MPC continua discreto a 50 µs (`SystemSampleTime` próprio) — isso não
 Na prática você passa a ter, pela primeira vez, planta e controlador em taxas
 separadas, que é justamente o que eu apontei como limitação do modelo original.
 
-**Passo 3.2. Condições iniciais dos capacitores.** A doc avisa que
-*"the initialization values at time 0 might be different"*. Aqui isso é premissa
-do TCC: os 24 capacitores começam pré-carregados em `Vcap0 = Vsm = 125 V`
-(`Setx0 = on` em cada Series RLC Branch). Confirme bloco a bloco no modelo
-convertido; se tiver zerado, o arranque vai ser completamente diferente.
+**Passo 3.2. Condições iniciais dos capacitores.** Os 24 vieram como totalmente
+suportados, então o `Vcap0 = 125 V` deve ter passado. Confirme mesmo assim:
+
+```matlab
+mdlC = 'MMC_9lvl_matriz_tri_v13_Renner_simscape';
+load_system(mdlC)
+caps = find_system(mdlC,'LookUnderMasks','all','MaskType','Capacitor');
+fprintf('%d capacitores\n', numel(caps));   % esperado: 24
+```
+
+**Passo 3.2b. Corrente inicial dos 9 indutores — a única pendência real.**
+
+Os 9 blocos "parcialmente suportados" são exatamente os indutores: os **6 de
+braço** (`Larm = 15 mH`) e os **3 do ramo RL de saída** (`L = 100 µH`). O aviso
+do relatório:
+
+> "The inductor current might start from an undesired value. Adjustment of model
+> initial conditions might be required."
+> "Review the block 'Variables' section or select the 'Start simulation from
+> steady state' parameter in the corresponding 'Solver Configuration' block."
+
+No modelo original os nove estão com `SetiL0 = off`, `InitialCurrent = 0` — ou
+seja, a intenção é **partir com corrente zero**.
+
+**Das duas saídas sugeridas, use a primeira.** Vá na aba *Variables* de cada
+indutor e fixe `Current = 0 A` com **priority = High**.
+
+**Não use "Start simulation from steady state".** Ela resolve o regime permanente
+em t = 0, o que contradiz a partida a frio que o TCC descreve — capacitores no
+nominal, correntes zeradas, MPC começando do repouso. Ligar isso muda o
+transitório inicial e invalida a comparação com as figuras do trabalho.
+
+Se o solver reclamar de sobre-especificação ao fixar os nove: os três indutores
+de saída são dependentes dos de braço (`iout = ip - in`). Baixe a prioridade
+desses três para *None* e deixe apenas os seis de braço em *High*.
 
 **Passo 3.3. Jitter de chaveamento.** A doc menciona jitter em eventos de
 chaveamento, citando PWM. Nosso caso é mais exposto: FCS-MPC comuta a cada 50 µs
