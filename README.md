@@ -16,6 +16,8 @@ matlab/check_migration.m diagnóstico de disponibilidade das bibliotecas
 matlab/run_baseline.m    roda e salva os sinais em results/, para comparação
 matlab/fix_inductor_ic.m corrige a corrente inicial dos 9 indutores do
                          modelo convertido (inspect / apply / verify)
+matlab/inspect_converted.m  estado real dos blocos do modelo convertido:
+                         resolvem? de qual biblioteca? falta produto?
 tools/unpack_slx.sh      descompacta o .slx para inspeção em texto
 tools/slx_edit.py        lê/edita o .slx (código do MPC, InitFcn, constantes)
                          sem precisar de MATLAB
