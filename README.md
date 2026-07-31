@@ -10,6 +10,8 @@ docs/tcc_lucas_de_mingo.pdf
 model/MMC_9lvl_matriz_tri_v12_Renner.slx    modelo original (R2025a)
 matlab/MPC.m             código do bloco MATLAB Function, extraído do .slx
 matlab/params_init.m     parâmetros do InitFcn, para rodar fora do modelo
+matlab/check_migration.m diagnóstico de disponibilidade das bibliotecas
+                         (rodar na release nova antes de migrar)
 tools/unpack_slx.sh      descompacta o .slx para inspeção em texto
 tools/slx_edit.py        lê/edita o .slx (código do MPC, InitFcn, constantes)
                          sem precisar de MATLAB
