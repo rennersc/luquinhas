@@ -14,6 +14,8 @@ matlab/MPC.m             código do bloco MATLAB Function, extraído do .slx
 matlab/params_init.m     parâmetros do InitFcn, para rodar fora do modelo
 matlab/check_migration.m diagnóstico de disponibilidade das bibliotecas
 matlab/run_baseline.m    roda e salva os sinais em results/, para comparação
+matlab/fix_inductor_ic.m corrige a corrente inicial dos 9 indutores do
+                         modelo convertido (inspect / apply / verify)
 tools/unpack_slx.sh      descompacta o .slx para inspeção em texto
 tools/slx_edit.py        lê/edita o .slx (código do MPC, InitFcn, constantes)
                          sem precisar de MATLAB
