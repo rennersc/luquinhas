@@ -4,6 +4,8 @@ Base de trabalho a partir do TCC de Lucas de Mingo Fernandes (UFES, ago/2025) e 
 modelo Simulink que gerou os resultados do texto.
 
 ```
+docs/REQUISITOS_INSTALACAO.md   leia antes de instalar MATLAB: produtos
+                         necessários e por que R2026a+ NÃO abre este modelo
 docs/NOTAS_TECNICAS.md   leitura obrigatória: parâmetros, algoritmo e as
                          divergências entre o .slx e o texto do TCC
 docs/MIGRACAO_PASSO_A_PASSO.md   roteiro R2025a -> R2026a/b (conversão pendente:
@@ -39,7 +41,9 @@ circulante e desvio da tensão média dos capacitores da perna.
 1. O modelo depende de `Sinais.mat` (referenciado como
    `/Users/renner/Downloads/Sinais.mat` pelo bloco Signal Editor1) — **esse
    arquivo não está no repositório**.
-2. Requer Simscape Electrical / Specialized Power Systems.
+2. Requer Simscape Electrical / Specialized Power Systems. **Atenção:** a SPS foi
+   removida no R2026a e não é mais distribuída pela MathWorks — use R2025b.
+   Detalhes em `docs/REQUISITOS_INSTALACAO.md`.
 3. Os parâmetros vêm do `InitFcn` do próprio modelo; `matlab/params_init.m` é uma
    cópia versionada deles.
 
